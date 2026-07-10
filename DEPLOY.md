@@ -12,7 +12,7 @@ Pour que **M.I.B** fonctionne en ligne, nous allons séparer le "Corps" (Fronten
    - **Root Directory** : `server`
    - **Build Command** : `npm install`
    - **Start Command** : `node index.js`
-5. Une fois déployé, notez l'URL (ex: `https://mib-backend.onrender.com`).
+5. Votre URL Render actuelle est : `https://mib-backend-57v8.onrender.com`
 
 ## 2. Déploiement du Corps (Frontend) sur Netlify
 1. Créez un compte sur [Netlify.com](https://netlify.com).
@@ -22,9 +22,10 @@ Pour que **M.I.B** fonctionne en ligne, nous allons séparer le "Corps" (Fronten
    - **Base directory** : `client`
    - **Build command** : `npm run build`
    - **Publish directory** : `client/build`
-5. **CRUCIAL** : Allez dans *Site configuration* > *Environment variables* et ajoutez :
-   - `REACT_APP_BACKEND_URL` : [URL de votre serveur Render]
-   - `REACT_APP_PEER_HOST` : [Nom de domaine Render, ex: mib-backend.onrender.com]
+5. **CRUCIAL - Configuration des Variables d'Environnement** :
+   Dans Netlify, allez dans *Site configuration* > *Environment variables* et ajoutez ces 4 variables :
+   - `REACT_APP_BACKEND_URL` : `https://mib-backend-57v8.onrender.com`
+   - `REACT_APP_PEER_HOST` : `mib-backend-57v8.onrender.com`
    - `REACT_APP_PEER_PORT` : `443`
    - `REACT_APP_PEER_SECURE` : `true`
 
