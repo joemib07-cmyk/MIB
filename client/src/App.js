@@ -82,9 +82,11 @@ function App() {
 
     peer.on('open', (id) => {
       setMyPeerId(id);
+      socket.emit('update_peer_id', { peerId: id });
     });
 
     peer.on('call', (call) => {
+      setIsCalling(true);
       navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
         myVideoRef.current.srcObject = stream;
         call.answer(stream);
@@ -134,6 +136,17 @@ function App() {
       setChat((prev) => [...prev, messageData]);
       setMessage('');
     }
+  };
+
+  const startCall = (remotePeerId) => {
+    setIsCalling(true);
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+      myVideoRef.current.srcObject = stream;
+      const call = peerRef.current.call(remotePeerId, stream);
+      call.on('stream', (remoteStream) => {
+        remoteVideoRef.current.srcObject = remoteStream;
+      });
+    });
   };
 
   if (!isLoggedIn) {
@@ -233,9 +246,19 @@ function App() {
           <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Agents en ligne</p>
           <div className="flex flex-col gap-2">
             {activeUsers.map((user, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-sm text-zinc-400 p-1">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                {user.username} {user.username === username && "(Vous)"}
+              <div key={idx} className="flex items-center justify-between text-sm text-zinc-400 p-1 group">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  {user.username} {user.username === username && "(Vous)"}
+                </div>
+                {user.username !== username && user.peerId && (
+                  <button 
+                    onClick={() => startCall(user.peerId)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-800 rounded transition-all"
+                  >
+                    <Video className="w-4 h-4 text-zinc-300" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
