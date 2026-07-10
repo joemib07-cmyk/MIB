@@ -13,6 +13,7 @@ function App() {
   const [room, setRoom] = useState('Général');
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState([]);
+  const [activeUsers, setActiveUsers] = useState([]); // Ajout de l'état des utilisateurs actifs
   const [myPeerId, setMyPeerId] = useState('');
   const [isCalling, setIsCalling] = useState(false);
   
@@ -50,11 +51,17 @@ function App() {
       setChat((prev) => [...prev, data]);
     });
 
+    // Ecouter les mises à jour de la liste des utilisateurs
+    socket.on('update_user_list', (users) => {
+      setActiveUsers(users);
+    });
+
     return () => {
       socket.off('receive_message');
+      socket.off('update_user_list');
       peer.destroy();
     };
-  }, [isLoggedIn, room]);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     socket.on('auth_success', (data) => {
@@ -160,13 +167,25 @@ function App() {
           </button>
         </div>
 
+        <div className="flex flex-col gap-4">
+          <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Agents en ligne</p>
+          <div className="flex flex-col gap-2">
+            {activeUsers.map((user, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-sm text-zinc-400 p-1">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                {user.username} {user.username === username && "(Vous)"}
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-auto flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl border border-zinc-800">
           <div className="w-10 h-10 bg-zinc-700 rounded-full flex items-center justify-center">
             <User className="w-6 h-6" />
           </div>
           <div>
             <p className="text-sm font-medium text-white">{username}</p>
-            <p className="text-xs text-zinc-500">ID: {myPeerId.slice(0, 6)}</p>
+            <p className="text-xs text-zinc-500">ID: {agentId}</p>
           </div>
         </div>
       </div>
