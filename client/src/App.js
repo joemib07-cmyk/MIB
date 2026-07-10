@@ -15,6 +15,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [chat, setChat] = useState([]);
   const [activeUsers, setActiveUsers] = useState([]);
+  const [allAgents, setAllAgents] = useState([]);
   const [myPeerId, setMyPeerId] = useState('');
   const [isCalling, setIsCalling] = useState(false);
   const [callType, setCallType] = useState('video'); // 'video' or 'audio'
@@ -59,6 +60,10 @@ function App() {
       setActiveUsers(users);
     });
 
+    socket.on('all_agents', (agents) => {
+      setAllAgents(agents);
+    });
+
     socket.on('receive_message', (data) => {
       setChat((prev) => [...prev, data]);
     });
@@ -74,6 +79,7 @@ function App() {
       socket.off('auth_error');
       socket.off('invite_created');
       socket.off('update_user_list');
+      socket.off('all_agents');
       socket.off('receive_message');
       socket.off('agent_deleted');
     };
@@ -292,53 +298,58 @@ function App() {
         </div>
 
         <div className="flex flex-col gap-4">
-          <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Agents en ligne</p>
+          <p className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Agents & Statuts</p>
           <div className="flex flex-col gap-2">
-            {activeUsers.length <= 1 && (
-              <p className="text-[10px] text-zinc-600 italic px-1">Aucun autre agent en ligne</p>
+            {allAgents.length === 0 && (
+              <p className="text-[10px] text-zinc-600 italic px-1">Aucun agent enregistré</p>
             )}
-            {activeUsers.map((user, idx) => (
-              <div key={idx} className="flex items-center justify-between text-sm text-zinc-400 p-1 group">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="truncate max-w-[120px]">
-                    {user.username} {user.username === username && "(Vous)"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  {user.username !== username && !user.peerId && (
-                    <span className="text-[8px] text-zinc-600 animate-pulse">Liaison...</span>
-                  )}
-                  {user.username !== username && user.peerId && (
-                    <>
+            {allAgents.map((agent, idx) => {
+              const activeUser = activeUsers.find(u => u.agentId === agent.agentId);
+              const isOnline = !!activeUser;
+              
+              return (
+                <div key={idx} className={`flex items-center justify-between text-sm p-1 group rounded-lg transition-colors ${isOnline ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-zinc-800'}`}></div>
+                    <span className="truncate max-w-[120px]">
+                      {agent.username} {agent.agentId === agentId && "(Vous)"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {isOnline && agent.agentId !== agentId && !activeUser.peerId && (
+                      <span className="text-[8px] text-zinc-600 animate-pulse">Liaison...</span>
+                    )}
+                    {isOnline && agent.agentId !== agentId && activeUser.peerId && (
+                      <>
+                        <button 
+                          onClick={() => startCall(activeUser.peerId, false)}
+                          title="Appel Audio"
+                          className="p-1 hover:bg-zinc-800 rounded transition-all text-zinc-400 hover:text-white"
+                        >
+                          <Phone className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => startCall(activeUser.peerId, true)}
+                          title="Appel Vidéo"
+                          className="p-1 hover:bg-zinc-800 rounded transition-all text-zinc-400 hover:text-white"
+                        >
+                          <Video className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                    {isAdmin && agent.agentId !== "KARIM-ADMIN" && (
                       <button 
-                        onClick={() => startCall(user.peerId, false)}
-                        title="Appel Audio"
-                        className="p-1 hover:bg-zinc-800 rounded transition-all text-zinc-400 hover:text-white"
+                        onClick={() => deleteAgent(agent.agentId)}
+                        title="Supprimer l'Agent"
+                        className="p-1 hover:bg-red-900/30 rounded transition-all text-zinc-500 hover:text-red-500"
                       >
-                        <Phone className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={() => startCall(user.peerId, true)}
-                        title="Appel Vidéo"
-                        className="p-1 hover:bg-zinc-800 rounded transition-all text-zinc-400 hover:text-white"
-                      >
-                        <Video className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                  {isAdmin && user.agentId !== "KARIM-ADMIN" && (
-                    <button 
-                      onClick={() => deleteAgent(user.agentId)}
-                      title="Supprimer l'Agent"
-                      className="p-1 hover:bg-red-900/30 rounded transition-all text-zinc-500 hover:text-red-500"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
